@@ -77,22 +77,18 @@ def cargar_datos_en_tabla():
 # Eliminar cliente seleccionado
 def eliminar_cliente():
     try:
-        # Obtener ID del cliente seleccionado
         selected_item = tabla.selection()[0]
         cliente_id = tabla.item(selected_item, "values")[0]
 
-        # Confirmación
         if not messagebox.askyesno("Confirmar", "¿Estás seguro de que deseas eliminar este cliente?"):
             return
 
-        # Eliminar de la base de datos
         conn = sqlite3.connect("clientes.db")
         cursor = conn.cursor()
         cursor.execute("DELETE FROM clientes WHERE id = ?", (cliente_id,))
         conn.commit()
         conn.close()
 
-        # Eliminar de la tabla
         tabla.delete(selected_item)
         messagebox.showinfo("Éxito", "Cliente eliminado correctamente.")
     except IndexError:
@@ -100,64 +96,74 @@ def eliminar_cliente():
 
 # Limpiar campos del formulario
 def limpiar_campos():
+    global cliente_id_actual
+    cliente_id_actual = None  # Restablecer ID al limpiar
     for var in [apellido_var, nombre_var, fecha_nacimiento_var, sexo_var,
                 tipo_doc_primario_var, documento_primario_var, tipo_doc_secundario_var,
                 documento_secundario_var, fecha_emision_var, fecha_vencimiento_var,
                 telefono_var, email_var]:
         var.set("")
 
-# Validador para el campo de fecha de nacimiento
-def validar_fecha_nacimiento(event):
-    contenido = fecha_nacimiento_var.get()
+# Función para cargar datos en el formulario
+def cargar_datos_en_formulario():
+    try:
+        selected_item = tabla.selection()[0]
+        cliente = tabla.item(selected_item, "values")
 
-    # Filtrar solo números
-    contenido_filtrado = ''.join([c for c in contenido if c.isdigit()])
+        apellido_var.set(cliente[1])
+        nombre_var.set(cliente[2])
+        fecha_nacimiento_var.set(cliente[3])
+        sexo_var.set(cliente[4])
+        tipo_doc_primario_var.set(cliente[5])
+        documento_primario_var.set(cliente[6])
+        telefono_var.set(cliente[7])
+        email_var.set(cliente[8])
 
-    # Formatear la fecha con las barras
-    if len(contenido_filtrado) > 2 and len(contenido_filtrado) <= 4:
-        contenido_formateado = contenido_filtrado[:2] + '/' + contenido_filtrado[2:]
-    elif len(contenido_filtrado) > 4 and len(contenido_filtrado) <= 6:
-        contenido_formateado = contenido_filtrado[:2] + '/' + contenido_filtrado[2:4] + '/' + contenido_filtrado[4:]
-    elif len(contenido_filtrado) > 6:
-        contenido_formateado = contenido_filtrado[:2] + '/' + contenido_filtrado[2:4] + '/' + contenido_filtrado[4:8]
-    else:
-        contenido_formateado = contenido_filtrado
+        global cliente_id_actual
+        cliente_id_actual = cliente[0]
+    except IndexError:
+        messagebox.showerror("Error", "Por favor, selecciona un cliente para editar.")
 
-    # Establecer el texto en la variable y mover el cursor al final del texto
-    fecha_nacimiento_var.set(contenido_formateado)
-    fecha_nacimiento_entry.icursor(len(contenido_formateado))
+# Función para actualizar los datos de un cliente
+def actualizar_cliente():
+    try:
+        if not cliente_id_actual:
+            messagebox.showerror("Error", "No hay cliente seleccionado para actualizar.")
+            return
 
-# Validador para el campo de documento
-def validar_documento(event):
-    contenido = documento_primario_var.get()
+        datos = (
+            apellido_var.get(),
+            nombre_var.get(),
+            fecha_nacimiento_var.get(),
+            sexo_var.get(),
+            tipo_doc_primario_var.get(),
+            documento_primario_var.get(),
+            telefono_var.get(),
+            email_var.get(),
+            cliente_id_actual
+        )
 
-    # Filtrar solo números
-    contenido_filtrado = ''.join([c for c in contenido if c.isdigit()])
+        if not datos[0] or not datos[1] or not datos[5]:
+            messagebox.showerror("Error", "Los campos Apellido, Nombre y Documento son obligatorios.")
+            return
 
-    # Verificar si contiene algún carácter no numérico
-    if len(contenido) != len(contenido_filtrado):
-        messagebox.showerror("Error", "Solo se pueden ingresar números en el campo Documento.")
-        documento_primario_var.set(contenido_filtrado)
-        return
+        conn = sqlite3.connect("clientes.db")
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE clientes
+            SET apellido = ?, nombre = ?, fecha_nacimiento = ?, sexo = ?, tipo_doc_primario = ?,
+                documento_primario = ?, telefono = ?, email = ?
+            WHERE id = ?
+        ''', datos)
+        conn.commit()
+        conn.close()
 
-    # Actualizar el contenido con solo los números
-    documento_primario_var.set(contenido_filtrado)
+        messagebox.showinfo("Éxito", "Cliente actualizado correctamente.")
+        limpiar_campos()
+        cargar_datos_en_tabla()
 
-# Validador para el campo de teléfono
-def validar_telefono(event):
-    contenido = telefono_var.get()
-
-    # Filtrar solo números
-    contenido_filtrado = ''.join([c for c in contenido if c.isdigit()])
-
-    # Verificar si contiene algún carácter no numérico
-    if len(contenido) != len(contenido_filtrado):
-        messagebox.showerror("Error", "Solo se pueden ingresar números en el campo Teléfono.")
-        telefono_var.set(contenido_filtrado)
-        return
-
-    # Actualizar el contenido con solo los números
-    telefono_var.set(contenido_filtrado)
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo actualizar el cliente: {e}")
 
 # Configuración de la interfaz
 root = Tk()
@@ -179,6 +185,9 @@ fecha_vencimiento_var = StringVar()
 telefono_var = StringVar()
 email_var = StringVar()
 
+# Variable global para el cliente seleccionado
+cliente_id_actual = None
+
 # Frames
 frame_formulario = Frame(root, bg="white", padx=20, pady=10)
 frame_formulario.pack(fill="x", pady=5)
@@ -194,9 +203,7 @@ Label(frame_formulario, text="Nombre:").grid(row=0, column=2, sticky="e", padx=5
 Entry(frame_formulario, textvariable=nombre_var).grid(row=0, column=3, padx=5, pady=5)
 
 Label(frame_formulario, text="Fecha Nacimiento:").grid(row=1, column=0, sticky="e", padx=5, pady=5)
-fecha_nacimiento_entry = Entry(frame_formulario, textvariable=fecha_nacimiento_var)
-fecha_nacimiento_entry.grid(row=1, column=1, padx=5, pady=5)
-fecha_nacimiento_entry.bind("<KeyRelease>", validar_fecha_nacimiento)
+Entry(frame_formulario, textvariable=fecha_nacimiento_var).grid(row=1, column=1, padx=5, pady=5)
 
 Label(frame_formulario, text="Sexo:").grid(row=1, column=2, sticky="e", padx=5, pady=5)
 ttk.Combobox(frame_formulario, textvariable=sexo_var, values=["Masculino", "Femenino", "Otro"]).grid(row=1, column=3, padx=5, pady=5)
@@ -205,33 +212,33 @@ Label(frame_formulario, text="Tipo Doc.:").grid(row=2, column=0, sticky="e", pad
 ttk.Combobox(frame_formulario, textvariable=tipo_doc_primario_var, values=["DNI", "Pasaporte"]).grid(row=2, column=1, padx=5, pady=5)
 
 Label(frame_formulario, text="Documento:").grid(row=2, column=2, sticky="e", padx=5, pady=5)
-documento_entry = Entry(frame_formulario, textvariable=documento_primario_var)
-documento_entry.grid(row=2, column=3, padx=5, pady=5)
-documento_entry.bind("<KeyRelease>", validar_documento)
+Entry(frame_formulario, textvariable=documento_primario_var).grid(row=2, column=3, padx=5, pady=5)
 
 Label(frame_formulario, text="Teléfono:").grid(row=3, column=0, sticky="e", padx=5, pady=5)
-telefono_entry = Entry(frame_formulario, textvariable=telefono_var)
-telefono_entry.grid(row=3, column=1, padx=5, pady=5)
-telefono_entry.bind("<KeyRelease>", validar_telefono)
+Entry(frame_formulario, textvariable=telefono_var).grid(row=3, column=1, padx=5, pady=5)
 
 Label(frame_formulario, text="Email:").grid(row=3, column=2, sticky="e", padx=5, pady=5)
 Entry(frame_formulario, textvariable=email_var).grid(row=3, column=3, padx=5, pady=5)
 
 # Tabla
 columns = ("ID", "Apellido", "Nombre", "Fecha Nac.", "Sexo", "Tipo Doc.", "Documento", "Teléfono", "Email")
-tabla = ttk.Treeview(frame_tabla, columns=columns, show="headings")
+tabla = ttk.Treeview(frame_tabla, columns=columns, show="headings", height=15)
 tabla.pack(fill="both", expand=True)
 
 for col in columns:
     tabla.heading(col, text=col)
+    tabla.column(col, width=100)
 
 # Botones
 Button(root, text="Guardar", command=guardar_cliente).pack(side="left", padx=10, pady=10)
+Button(root, text="Editar", command=cargar_datos_en_formulario).pack(side="left", padx=10, pady=10)
+Button(root, text="Actualizar", command=actualizar_cliente).pack(side="left", padx=10, pady=10)
 Button(root, text="Eliminar", command=eliminar_cliente).pack(side="left", padx=10, pady=10)
 
-# Inicializar base de datos y cargar datos en la tabla
+# Inicializar
 inicializar_base_datos()
 cargar_datos_en_tabla()
 
 root.mainloop()
+
 
