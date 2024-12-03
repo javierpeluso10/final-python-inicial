@@ -196,28 +196,28 @@ frame_tabla = Frame(root, bg="white", padx=20, pady=10)
 frame_tabla.pack(fill="both", expand=True)
 
 # Etiquetas y Entradas del formulario
-Label(frame_formulario, text="Apellido:").grid(row=0, column=0, sticky="e", padx=5, pady=5)
+Label(frame_formulario, text="Apellido:", bg="white").grid(row=0, column=0, sticky="e", padx=5, pady=5)
 Entry(frame_formulario, textvariable=apellido_var).grid(row=0, column=1, padx=5, pady=5)
 
-Label(frame_formulario, text="Nombre:").grid(row=0, column=2, sticky="e", padx=5, pady=5)
+Label(frame_formulario, text="Nombre:", bg="white").grid(row=0, column=2, sticky="e", padx=5, pady=5)
 Entry(frame_formulario, textvariable=nombre_var).grid(row=0, column=3, padx=5, pady=5)
 
-Label(frame_formulario, text="Fecha Nacimiento:").grid(row=1, column=0, sticky="e", padx=5, pady=5)
+Label(frame_formulario, text="Fecha Nacimiento:", bg="white").grid(row=1, column=0, sticky="e", padx=5, pady=5)
 Entry(frame_formulario, textvariable=fecha_nacimiento_var).grid(row=1, column=1, padx=5, pady=5)
 
-Label(frame_formulario, text="Sexo:").grid(row=1, column=2, sticky="e", padx=5, pady=5)
+Label(frame_formulario, text="Sexo:", bg="white").grid(row=1, column=2, sticky="e", padx=5, pady=5)
 ttk.Combobox(frame_formulario, textvariable=sexo_var, values=["Masculino", "Femenino", "Otro"]).grid(row=1, column=3, padx=5, pady=5)
 
-Label(frame_formulario, text="Tipo Doc.:").grid(row=2, column=0, sticky="e", padx=5, pady=5)
+Label(frame_formulario, text="Tipo Doc.:" , bg="white").grid(row=2, column=0, sticky="e", padx=5, pady=5)
 ttk.Combobox(frame_formulario, textvariable=tipo_doc_primario_var, values=["DNI", "Pasaporte"]).grid(row=2, column=1, padx=5, pady=5)
 
-Label(frame_formulario, text="Documento:").grid(row=2, column=2, sticky="e", padx=5, pady=5)
+Label(frame_formulario, text="Documento:", bg="white").grid(row=2, column=2, sticky="e", padx=5, pady=5)
 Entry(frame_formulario, textvariable=documento_primario_var).grid(row=2, column=3, padx=5, pady=5)
 
-Label(frame_formulario, text="Teléfono:").grid(row=3, column=0, sticky="e", padx=5, pady=5)
+Label(frame_formulario, text="Teléfono:", bg="white").grid(row=3, column=0, sticky="e", padx=5, pady=5)
 Entry(frame_formulario, textvariable=telefono_var).grid(row=3, column=1, padx=5, pady=5)
 
-Label(frame_formulario, text="Email:").grid(row=3, column=2, sticky="e", padx=5, pady=5)
+Label(frame_formulario, text="Email:", bg="white").grid(row=3, column=2, sticky="e", padx=5, pady=5)
 Entry(frame_formulario, textvariable=email_var).grid(row=3, column=3, padx=5, pady=5)
 
 # Tabla
@@ -229,11 +229,15 @@ for col in columns:
     tabla.heading(col, text=col)
     tabla.column(col, width=100)
 
-# Botones
-Button(root, text="Guardar", command=guardar_cliente).pack(side="left", padx=10, pady=10)
-Button(root, text="Editar", command=cargar_datos_en_formulario).pack(side="left", padx=10, pady=10)
-Button(root, text="Actualizar", command=actualizar_cliente).pack(side="left", padx=10, pady=10)
-Button(root, text="Eliminar", command=eliminar_cliente).pack(side="left", padx=10, pady=10)
+# Crear un frame para los botones y alinearlos con el formulario
+frame_botones = Frame(root, bg="white", padx=10, pady=10)
+frame_botones.pack(fill="x", pady=5)
+
+# Botones dentro del frame de botones
+Button(frame_botones, text="Guardar", command=guardar_cliente, bg="green", fg="white", width=10, padx=5, pady=5).pack(side="left", padx=10, pady=10)
+Button(frame_botones, text="Editar", command=cargar_datos_en_formulario, bg="blue", fg="white", width=10, padx=5, pady=5).pack(side="left", padx=10, pady=10)
+Button(frame_botones, text="Actualizar", command=actualizar_cliente, bg="blue", fg="white", width=10, padx=5, pady=5).pack(side="left", padx=10, pady=10)
+Button(frame_botones, text="Eliminar", command=eliminar_cliente, bg="red", fg="white", width=10, padx=5, pady=5).pack(side="left", padx=10, pady=10)
 
 # Inicializar
 inicializar_base_datos()
