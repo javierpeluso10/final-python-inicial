@@ -4,10 +4,10 @@ from tkinter import ttk, messagebox
 
 # Crear base de datos y tabla
 def inicializar_base_datos():
-    conn = sqlite3.connect("clientes.db")
+    conn = sqlite3.connect("usuarios.db")
     cursor = conn.cursor()
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS clientes (
+        CREATE TABLE IF NOT EXISTS usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             apellido TEXT,
             nombre TEXT,
@@ -47,10 +47,10 @@ def guardar_cliente():
         messagebox.showerror("Error", "Los campos Apellido, Nombre y Documento son obligatorios.")
         return
 
-    conn = sqlite3.connect("clientes.db")
+    conn = sqlite3.connect("usuarios.db")
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO clientes (apellido, nombre, fecha_nacimiento, sexo, tipo_doc_primario, documento_primario,
+        INSERT INTO usuarios (apellido, nombre, fecha_nacimiento, sexo, tipo_doc_primario, documento_primario,
                             tipo_doc_secundario, documento_secundario, fecha_emision, fecha_vencimiento, telefono, email)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', datos)
@@ -65,9 +65,9 @@ def cargar_datos_en_tabla():
     for row in tabla.get_children():
         tabla.delete(row)
 
-    conn = sqlite3.connect("clientes.db")
+    conn = sqlite3.connect("usuarios.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT id, apellido, nombre, fecha_nacimiento, sexo, tipo_doc_primario, documento_primario, telefono, email FROM clientes")
+    cursor.execute("SELECT id, apellido, nombre, fecha_nacimiento, sexo, tipo_doc_primario, documento_primario, telefono, email FROM usuarios")
     datos = cursor.fetchall()
     conn.close()
 
@@ -83,9 +83,9 @@ def eliminar_cliente():
         if not messagebox.askyesno("Confirmar", "¿Estás seguro de que deseas eliminar este cliente?"):
             return
 
-        conn = sqlite3.connect("clientes.db")
+        conn = sqlite3.connect("usuarios.db")
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM clientes WHERE id = ?", (cliente_id,))
+        cursor.execute("DELETE FROM usuarios WHERE id = ?", (cliente_id,))
         conn.commit()
         conn.close()
 
@@ -103,6 +103,59 @@ def limpiar_campos():
                 documento_secundario_var, fecha_emision_var, fecha_vencimiento_var,
                 telefono_var, email_var]:
         var.set("")
+
+# Validador para el campo de fecha de nacimiento
+def validar_fecha_nacimiento(event):
+    contenido = fecha_nacimiento_var.get()
+
+    # Filtrar solo números
+    contenido_filtrado = ''.join([c for c in contenido if c.isdigit()])
+
+    # Formatear la fecha con las barras
+    if len(contenido_filtrado) > 2 and len(contenido_filtrado) <= 4:
+        contenido_formateado = contenido_filtrado[:2] + '/' + contenido_filtrado[2:]
+    elif len(contenido_filtrado) > 4 and len(contenido_filtrado) <= 6:
+        contenido_formateado = contenido_filtrado[:2] + '/' + contenido_filtrado[2:4] + '/' + contenido_filtrado[4:]
+    elif len(contenido_filtrado) > 6:
+        contenido_formateado = contenido_filtrado[:2] + '/' + contenido_filtrado[2:4] + '/' + contenido_filtrado[4:8]
+    else:
+        contenido_formateado = contenido_filtrado
+
+    # Establecer el texto en la variable y mover el cursor al final del texto
+    fecha_nacimiento_var.set(contenido_formateado)
+    fecha_nacimiento_entry.icursor(len(contenido_formateado))
+
+# Validador para el campo de documento
+def validar_documento(event):
+    contenido = documento_primario_var.get()
+
+    # Filtrar solo números
+    contenido_filtrado = ''.join([c for c in contenido if c.isdigit()])
+
+    # Verificar si contiene algún carácter no numérico
+    if len(contenido) != len(contenido_filtrado):
+        messagebox.showerror("Error", "Solo se pueden ingresar números en el campo Documento.")
+        documento_primario_var.set(contenido_filtrado)
+        return
+
+    # Actualizar el contenido con solo los números
+    documento_primario_var.set(contenido_filtrado)
+
+# Validador para el campo de teléfono
+def validar_telefono(event):
+    contenido = telefono_var.get()
+
+    # Filtrar solo números
+    contenido_filtrado = ''.join([c for c in contenido if c.isdigit()])
+
+    # Verificar si contiene algún carácter no numérico
+    if len(contenido) != len(contenido_filtrado):
+        messagebox.showerror("Error", "Solo se pueden ingresar números en el campo Teléfono.")
+        telefono_var.set(contenido_filtrado)
+        return
+
+    # Actualizar el contenido con solo los números
+    telefono_var.set(contenido_filtrado)
 
 # Función para cargar datos en el formulario
 def cargar_datos_en_formulario():
@@ -147,10 +200,10 @@ def actualizar_cliente():
             messagebox.showerror("Error", "Los campos Apellido, Nombre y Documento son obligatorios.")
             return
 
-        conn = sqlite3.connect("clientes.db")
+        conn = sqlite3.connect("usuarios.db")
         cursor = conn.cursor()
         cursor.execute('''
-            UPDATE clientes
+            UPDATE usuarios
             SET apellido = ?, nombre = ?, fecha_nacimiento = ?, sexo = ?, tipo_doc_primario = ?,
                 documento_primario = ?, telefono = ?, email = ?
             WHERE id = ?
@@ -167,7 +220,7 @@ def actualizar_cliente():
 
 # Configuración de la interfaz
 root = Tk()
-root.title("Gestor de Clientes")
+root.title("Gestor de Usuarios")
 root.geometry("1200x600")
 root.resizable(True, True)
 
@@ -202,8 +255,10 @@ Entry(frame_formulario, textvariable=apellido_var).grid(row=0, column=1, padx=5,
 Label(frame_formulario, text="Nombre:", bg="white").grid(row=0, column=2, sticky="e", padx=5, pady=5)
 Entry(frame_formulario, textvariable=nombre_var).grid(row=0, column=3, padx=5, pady=5)
 
-Label(frame_formulario, text="Fecha Nacimiento:", bg="white").grid(row=1, column=0, sticky="e", padx=5, pady=5)
-Entry(frame_formulario, textvariable=fecha_nacimiento_var).grid(row=1, column=1, padx=5, pady=5)
+Label(frame_formulario, text="Fecha Nacimiento:" , bg="white").grid(row=1, column=0, sticky="e", padx=5, pady=5)
+fecha_nacimiento_entry = Entry(frame_formulario, textvariable=fecha_nacimiento_var)
+fecha_nacimiento_entry.grid(row=1, column=1, padx=5, pady=5)
+fecha_nacimiento_entry.bind("<KeyRelease>", validar_fecha_nacimiento)
 
 Label(frame_formulario, text="Sexo:", bg="white").grid(row=1, column=2, sticky="e", padx=5, pady=5)
 ttk.Combobox(frame_formulario, textvariable=sexo_var, values=["Masculino", "Femenino", "Otro"]).grid(row=1, column=3, padx=5, pady=5)
@@ -211,11 +266,15 @@ ttk.Combobox(frame_formulario, textvariable=sexo_var, values=["Masculino", "Feme
 Label(frame_formulario, text="Tipo Doc.:" , bg="white").grid(row=2, column=0, sticky="e", padx=5, pady=5)
 ttk.Combobox(frame_formulario, textvariable=tipo_doc_primario_var, values=["DNI", "Pasaporte"]).grid(row=2, column=1, padx=5, pady=5)
 
-Label(frame_formulario, text="Documento:", bg="white").grid(row=2, column=2, sticky="e", padx=5, pady=5)
-Entry(frame_formulario, textvariable=documento_primario_var).grid(row=2, column=3, padx=5, pady=5)
+Label(frame_formulario, text="Documento:" , bg="white").grid(row=2, column=2, sticky="e", padx=5, pady=5)
+documento_entry = Entry(frame_formulario, textvariable=documento_primario_var)
+documento_entry.grid(row=2, column=3, padx=5, pady=5)
+documento_entry.bind("<KeyRelease>", validar_documento)
 
-Label(frame_formulario, text="Teléfono:", bg="white").grid(row=3, column=0, sticky="e", padx=5, pady=5)
-Entry(frame_formulario, textvariable=telefono_var).grid(row=3, column=1, padx=5, pady=5)
+Label(frame_formulario, text="Teléfono:" , bg="white").grid(row=3, column=0, sticky="e", padx=5, pady=5)
+telefono_entry = Entry(frame_formulario, textvariable=telefono_var)
+telefono_entry.grid(row=3, column=1, padx=5, pady=5)
+telefono_entry.bind("<KeyRelease>", validar_telefono)
 
 Label(frame_formulario, text="Email:", bg="white").grid(row=3, column=2, sticky="e", padx=5, pady=5)
 Entry(frame_formulario, textvariable=email_var).grid(row=3, column=3, padx=5, pady=5)
