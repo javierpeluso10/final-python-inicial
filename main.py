@@ -51,7 +51,7 @@ def guardar_cliente():
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO clientes (apellido, nombre, fecha_nacimiento, sexo, tipo_doc_primario, documento_primario,
-                              tipo_doc_secundario, documento_secundario, fecha_emision, fecha_vencimiento, telefono, email)
+                            tipo_doc_secundario, documento_secundario, fecha_emision, fecha_vencimiento, telefono, email)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', datos)
     conn.commit()
@@ -169,7 +169,7 @@ def actualizar_cliente():
 root = Tk()
 root.title("Gestor de Clientes")
 root.geometry("1200x600")
-root.resizable(False, False)
+root.resizable(True, True)
 
 # Variables
 apellido_var = StringVar()
