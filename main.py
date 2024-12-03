@@ -56,7 +56,7 @@ def guardar_cliente():
     ''', datos)
     conn.commit()
     conn.close()
-    messagebox.showinfo("Éxito", "Cliente guardado correctamente.")
+    messagebox.showinfo("Éxito", "Usuario guardado correctamente.")
     limpiar_campos()
     cargar_datos_en_tabla()
 
@@ -125,6 +125,27 @@ def validar_fecha_nacimiento(event):
     fecha_nacimiento_var.set(contenido_formateado)
     fecha_nacimiento_entry.icursor(len(contenido_formateado))
 
+
+# Buscar usuario
+def buscar_usuario():
+    texto_busqueda = busqueda_var.get().lower()
+
+    for row in tabla.get_children():
+        tabla.delete(row)
+
+    conn = sqlite3.connect("usuarios.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, apellido, nombre, fecha_nacimiento, sexo, tipo_doc_primario, documento_primario, telefono, email
+        FROM usuarios
+        WHERE LOWER(apellido) LIKE ? OR LOWER(nombre) LIKE ? OR documento_primario LIKE ? OR LOWER(email) LIKE ?
+    """, (f"%{texto_busqueda}%", f"%{texto_busqueda}%", f"%{texto_busqueda}%", f"%{texto_busqueda}%"))
+    datos = cursor.fetchall()
+    conn.close()
+
+    for cliente in datos:
+        tabla.insert("", "end", values=cliente)
+
 # Validador para el campo de documento
 def validar_documento(event):
     contenido = documento_primario_var.get()
@@ -175,13 +196,13 @@ def cargar_datos_en_formulario():
         global cliente_id_actual
         cliente_id_actual = cliente[0]
     except IndexError:
-        messagebox.showerror("Error", "Por favor, selecciona un cliente para editar.")
+        messagebox.showerror("Error", "Por favor, selecciona un usuario para editar.")
 
 # Función para actualizar los datos de un cliente
 def actualizar_cliente():
     try:
         if not cliente_id_actual:
-            messagebox.showerror("Error", "No hay cliente seleccionado para actualizar.")
+            messagebox.showerror("Error", "No hay usuario seleccionado para actualizar.")
             return
 
         datos = (
@@ -211,12 +232,12 @@ def actualizar_cliente():
         conn.commit()
         conn.close()
 
-        messagebox.showinfo("Éxito", "Cliente actualizado correctamente.")
+        messagebox.showinfo("Éxito", "Usuario actualizado correctamente.")
         limpiar_campos()
         cargar_datos_en_tabla()
 
     except Exception as e:
-        messagebox.showerror("Error", f"No se pudo actualizar el cliente: {e}")
+        messagebox.showerror("Error", f"No se pudo actualizar el usuario: {e}")
 
 # Configuración de la interfaz
 root = Tk()
@@ -237,6 +258,7 @@ fecha_emision_var = StringVar()
 fecha_vencimiento_var = StringVar()
 telefono_var = StringVar()
 email_var = StringVar()
+busqueda_var = StringVar()
 
 # Variable global para el cliente seleccionado
 cliente_id_actual = None
@@ -279,6 +301,12 @@ telefono_entry.bind("<KeyRelease>", validar_telefono)
 Label(frame_formulario, text="Email:", bg="white").grid(row=3, column=2, sticky="e", padx=5, pady=5)
 Entry(frame_formulario, textvariable=email_var).grid(row=3, column=3, padx=5, pady=5)
 
+# Campo de búsqueda
+Label(frame_tabla, text="Buscar:", bg="white").pack(side="left", padx=5, pady=5)
+Entry(frame_tabla, textvariable=busqueda_var, width=30).pack(side="left", padx=5, pady=5)
+Button(frame_tabla, text="Buscar", command=buscar_usuario, bg="blue", fg="white").pack(side="left", padx=5, pady=5)
+Button(frame_tabla, text="Mostrar Todo", command=cargar_datos_en_tabla, bg="gray", fg="white").pack(side="left", padx=5, pady=5)
+
 # Tabla
 columns = ("ID", "Apellido", "Nombre", "Fecha Nac.", "Sexo", "Tipo Doc.", "Documento", "Teléfono", "Email")
 tabla = ttk.Treeview(frame_tabla, columns=columns, show="headings", height=15)
@@ -288,7 +316,7 @@ for col in columns:
     tabla.heading(col, text=col)
     tabla.column(col, width=100)
 
-# Crear un frame para los botones y alinearlos con el formulario
+# Frame para los botones y alinearlos con el formulario
 frame_botones = Frame(root, bg="white", padx=10, pady=10)
 frame_botones.pack(fill="x", pady=5)
 
